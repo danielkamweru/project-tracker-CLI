@@ -71,7 +71,7 @@ def interactive_mode():
 └─────────────────────────────────────────────────────────┘
 """)
 
-    while True:
+    while True: 
         commands = cli.list_commands(click.Context(cli))
 
         click.echo("\nSelect an option:")
@@ -112,10 +112,7 @@ def interactive_mode():
         except SystemExit:
             # Ignore click's exit signals to keep menu running
             pass
-
-# ---------------------
 # USER COMMANDS
-# ---------------------
 @cli.command()
 @click.argument("name")
 @click.argument("role")
@@ -143,9 +140,8 @@ def list_users():
         team = u.team.name if u.team else "No Team"
         click.echo(f"[{u.id}] {u.name} - {u.role} | Team: {team}")
 
-# ---------------------
 # TEAM COMMANDS
-# ---------------------
+
 @cli.command()
 @click.argument("team_name")
 def create_team(team_name):
@@ -189,10 +185,7 @@ def add_user_to_team(user_id, team_id):
     db.commit()
     click.echo(f"User '{user.name}' added to team '{team.name}'!")
     db.close()
-
-# ---------------------
 # PROJECT COMMANDS
-# ---------------------
 @cli.command()
 @click.argument("title")
 @click.argument("description")
