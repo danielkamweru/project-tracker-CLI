@@ -1,11 +1,10 @@
-# database.py
+
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from db import Base, engine
 
-# -------------------------
+
 # USER MODEL
-# -------------------------
 class User(Base):
     __tablename__ = "users"
 
@@ -20,10 +19,7 @@ class User(Base):
     def __repr__(self):
         return f"<User {self.id}: {self.name} ({self.role})>"
 
-
-# -------------------------
 # TEAM MODEL (3rd table)
-# -------------------------
 class Team(Base):
     __tablename__ = "teams"
 
@@ -35,10 +31,8 @@ class Team(Base):
     def __repr__(self):
         return f"<Team {self.id}: {self.name}>"
 
-
-# -------------------------
 # PROJECT MODEL
-# -------------------------
+
 class Project(Base):
     __tablename__ = "projects"
 
