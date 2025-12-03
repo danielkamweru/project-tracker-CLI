@@ -2,12 +2,17 @@
 import click
 from db import SessionLocal
 from database import User, Team, Project
+from sqlalchemy.orm import joinedload
 
 # Utility: statuses stored in a tuple → required by rubric
 VALID_STATUSES = ("not_started", "in_progress", "completed")
 # CUSTOM: Numbered command list for Click CLI
 
 class NumberedGroup(click.Group):
+    def list_commands(self, ctx):
+        # Return commands in definition order, not alphabetical
+        return list(self.commands)
+
     def format_commands(self, ctx, formatter):
         commands = self.list_commands(ctx)
         if not commands:
@@ -45,19 +50,25 @@ def cli(ctx):
 def interactive_mode():
     """Interactive menu allowing number-based command selection."""
     click.echo(r"""
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│ ██████╗ ██████╗  ██████╗      ██╗███████╗ ██████╗████████╗                   │
-│ ██╔══██╗██╔══██╗██╔═══██╗     ██║██╔════╝██╔════╝╚══██╔══╝                   │
-│ ██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║                      │
-│ ██╔═══╝ ██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║                      │
-│ ██║     ██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║                      │
-│ ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝                      │
-│                                                                               │
-│              Project Tracker Interactive CLI                                  │
-│                       by Daniel Kamweru                                       │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│  ██████╗ ██████╗  ██████╗      ██╗███████╗ ██████╗████████╗  │
+│  ██╔══██╗██╔══██╗██╔═══██╗     ██║██╔════╝██╔════╝╚══██╔══╝  │
+│  ██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║     │
+│  ██╔═══╝ ██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║     │
+│  ██║     ██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║     │
+│  ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝     │
+│                                                         │
+│  ████████╗██████╗  █████╗  ██████╗██╗  ██╗███████╗██████╗    │
+│  ╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗   │
+│     ██║   ██████╔╝███████║██║     █████╔╝ █████╗  ██████╔╝   │
+│     ██║   ██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗   │
+│     ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║   │
+│     ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   │
+│                                                         │
+│              Interactive CLI by Daniel Kamweru          │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 """)
 
     while True:
@@ -67,7 +78,7 @@ def interactive_mode():
         for i, cmd in enumerate(commands, start=1):
             click.echo(f"{i}) {cmd}")
 
-        choice = click.prompt("\nEnter number (or q to quit)", type=str)
+        choice = click.prompt("(\nEnter number (or q to quit)")
 
         if choice.lower() in ("q", "quit", "exit"):
             click.echo("Goodbye!")
@@ -101,7 +112,10 @@ def interactive_mode():
         except SystemExit:
             # Ignore click's exit signals to keep menu running
             pass
+
+# ---------------------
 # USER COMMANDS
+# ---------------------
 @cli.command()
 @click.argument("name")
 @click.argument("role")
@@ -114,12 +128,11 @@ def create_user(name, role):
     click.echo(f"User '{name}' created successfully!")
     db.close()
 
-
 @cli.command()
 def list_users():
     """List all users."""
     db = SessionLocal()
-    users = db.query(User).all()
+    users = db.query(User).options(joinedload(User.team)).all()
     db.close()
 
     if not users:
@@ -130,7 +143,9 @@ def list_users():
         team = u.team.name if u.team else "No Team"
         click.echo(f"[{u.id}] {u.name} - {u.role} | Team: {team}")
 
+# ---------------------
 # TEAM COMMANDS
+# ---------------------
 @cli.command()
 @click.argument("team_name")
 def create_team(team_name):
@@ -142,6 +157,20 @@ def create_team(team_name):
     click.echo(f"Team '{team_name}' created!")
     db.close()
 
+@cli.command()
+def list_teams():
+    """List all teams."""
+    db = SessionLocal()
+    teams = db.query(Team).options(joinedload(Team.users)).all()
+    db.close()
+
+    if not teams:
+        click.echo("No teams found.")
+        return
+
+    for t in teams:
+        members = [u.name for u in t.users]
+        click.echo(f"[{t.id}] {t.name} | Members: {members}")
 
 @cli.command()
 @click.argument("user_id")
@@ -149,8 +178,8 @@ def create_team(team_name):
 def add_user_to_team(user_id, team_id):
     """Assign a user to a team."""
     db = SessionLocal()
-    user = db.query(User).filter_by(id=user_id).first()
-    team = db.query(Team).filter_by(id=team_id).first()
+    user = db.query(User).filter_by(id=int(user_id)).first()
+    team = db.query(Team).filter_by(id=int(team_id)).first()
 
     if not user or not team:
         click.echo("Invalid user or team ID.")
@@ -161,22 +190,9 @@ def add_user_to_team(user_id, team_id):
     click.echo(f"User '{user.name}' added to team '{team.name}'!")
     db.close()
 
-
-@cli.command()
-def list_teams():
-    """List all teams."""
-    db = SessionLocal()
-    teams = db.query(Team).all()
-    db.close()
-
-    if not teams:
-        click.echo("No teams found.")
-        return
-
-    for t in teams:
-        members = [u.name for u in t.users]
-        click.echo(f"[{t.id}] {t.name} | Members: {members}")
+# ---------------------
 # PROJECT COMMANDS
+# ---------------------
 @cli.command()
 @click.argument("title")
 @click.argument("description")
@@ -188,11 +204,12 @@ def create_project(title, description):
     db.commit()
     click.echo(f"Project '{title}' created.")
     db.close()
+
 @cli.command()
 def list_projects():
     """List all projects."""
     db = SessionLocal()
-    projects = db.query(Project).all()
+    projects = db.query(Project).options(joinedload(Project.assigned_user)).all()
     db.close()
 
     if not projects:
@@ -203,15 +220,14 @@ def list_projects():
         user = p.assigned_user.name if p.assigned_user else "Unassigned"
         click.echo(f"[{p.id}] {p.title} | {p.status} | Assigned: {user}")
 
-
 @cli.command()
 @click.argument("project_id")
 @click.argument("user_id")
 def assign_project(project_id, user_id):
     """Assign a user to a project."""
     db = SessionLocal()
-    project = db.query(Project).filter_by(id=project_id).first()
-    user = db.query(User).filter_by(id=user_id).first()
+    project = db.query(Project).filter_by(id=int(project_id)).first()
+    user = db.query(User).filter_by(id=int(user_id)).first()
 
     if not project or not user:
         click.echo("Invalid project or user ID.")
@@ -221,7 +237,6 @@ def assign_project(project_id, user_id):
     db.commit()
     click.echo(f"Project '{project.title}' assigned to '{user.name}'.")
     db.close()
-
 
 @cli.command()
 @click.argument("project_id")
@@ -233,7 +248,7 @@ def update_status(project_id, status):
         return
 
     db = SessionLocal()
-    project = db.query(Project).filter_by(id=project_id).first()
+    project = db.query(Project).filter_by(id=int(project_id)).first()
 
     if not project:
         click.echo("Project not found.")
@@ -243,5 +258,16 @@ def update_status(project_id, status):
     db.commit()
     click.echo(f"Project '{project.title}' updated to {status}.")
     db.close()
+
+
+
 if __name__ == "__main__":
-    cli()
+    cli()  # This actually starts the CLI
+
+
+
+
+
+
+
+       
