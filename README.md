@@ -1,12 +1,10 @@
 # Project Tracker CLI
 
-A command-line application for managing users, teams, and projects using Python, SQLAlchemy ORM, and Click.  
-The application includes both standard command usage and a fully interactive menu interface with a numbered command selector.
+A command-line application for managing users, teams, and projects using Python, SQLAlchemy ORM, and Click. The application includes both standard command usage and a fully interactive menu interface with a numbered command selector.
 
 ## Overview
 
-The Project Tracker CLI is a Phase 3 Python application that uses SQLAlchemy ORM to manage relationships between Users, Teams, and Projects.  
-It provides:
+The Project Tracker CLI is a Phase 3 Python application that uses SQLAlchemy ORM to manage relationships between Users, Teams, and Projects. It provides:
 
 - A CLI interface built with Click
 - A numbered interactive menu for user-friendly navigation
@@ -26,6 +24,8 @@ It provides:
 - Safe status validation using tuple-based values (as required by the rubric)
 
 ## Project Structure
+
+```
 phase-3-project/
 │
 ├── app.py               # Main CLI entry point
@@ -34,213 +34,219 @@ phase-3-project/
 ├── Pipfile              # Pipenv environment file
 ├── Pipfile.lock
 └── README.md            # Project documentation
+```
 
 ## Installation
 
-### Clone the repository
-```bash
-git clone <your-repo-url>
-cd phase-3-project
+### Prerequisites
 
-Install dependencies (Pipenv)
-pipenv install
+- Python 3.x
+- Pipenv
 
-Install Alembic (optional, for migrations)
-pipenv install alembic
+### Setup
 
-Activate virtual environment
-pipenv shell
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd phase-3-project
+   ```
 
-Database Setup
+2. Install dependencies:
+   ```bash
+   pipenv install
+   ```
+
+3. (Optional) Install Alembic for migrations:
+   ```bash
+   pipenv install alembic
+   ```
+
+4. Activate virtual environment:
+   ```bash
+   pipenv shell
+   ```
+
+### Database Setup
+
 The SQLite database file is automatically created when the ORM engine initializes.
+
 If using Alembic migrations:
+```bash
 alembic upgrade head
+```
 
 Otherwise, tables are created automatically on first run of:
+```bash
 python3 app.py
+```
 
-Running the Application
-Start the CLI
+## Usage
+
+### Running the Application
+
+Start the CLI:
+```bash
 python3 app.py
-
-
+```
 
 Running without arguments opens interactive mode automatically.
 
-
 You can also run individual commands directly.
 
+### Interactive Mode
 
-Interactive Mode
-The interactive menu displays a boxed ASCII banner:             
-  Project Tracker Interactive CLI                                             │
-  by Daniel Kamweru                  
+The interactive menu displays a boxed ASCII banner:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│  ██████╗ ██████╗  ██████╗      ██╗███████╗ ██████╗████████╗  │
+│  ██╔══██╗██╔══██╗██╔═══██╗     ██║██╔════╝██╔════╝╚══██╔══╝  │
+│  ██████╔╝██████╔╝██║   ██║     ██║█████╗  ██║        ██║     │
+│  ██╔═══╝ ██╔══██╗██║   ██║██   ██║██╔══╝  ██║        ██║     │
+│  ██║     ██║  ██║╚██████╔╝╚█████╔╝███████╗╚██████╗   ██║     │
+│  ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝     │
+│                                                         │
+│  ████████╗██████╗  █████╗  ██████╗██╗  ██╗███████╗██████╗    │
+│  ╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗   │
+│     ██║   ██████╔╝███████║██║     █████╔╝ █████╗  ██████╔╝   │
+│     ██║   ██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗   │
+│     ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║   │
+│     ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   │
+│                                                         │
+│              Interactive CLI by Daniel Kamweru          │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
 It then shows all commands by number for easy selection.
-Available Commands
-Users
 
+## Available Commands
 
-create-user <name> <role>
+### Users
 
+- `create-user <name> <role>` - Create a new user
+- `list-users` - List all users
+- `add-user-to-team <user_id> <team_id>` - Assign a user to a team
 
-list-users
+### Teams
 
+- `create-team <team_name>` - Create a team
+- `list-teams` - List all teams
 
-add-user-to-team <user_id> <team_id>
+### Projects
 
+- `create-project <title> <description>` - Create a new project
+- `list-projects` - List all projects
+- `assign-project <project_id> <user_id>` - Assign a user to a project
+- `update-status <project_id> <status>` - Update project status
 
-Teams
+## Data Models
 
+### User
 
-create-team <team_name>
+- `id` (Primary Key)
+- `name`
+- `role`
+- `team_id` (Foreign Key)
 
+**Relationships:**
+- One user belongs to one team
+- One user may be assigned multiple projects
 
-list-teams
+### Team
 
+- `id` (Primary Key)
+- `name`
 
-Projects
+**Relationships:**
+- One team has many users
 
+### Project
 
-create-project <title> <description>
+- `id` (Primary Key)
+- `title`
+- `description`
+- `status`
+- `assigned_user_id` (Foreign Key)
 
+**Relationships:**
+- One project is assigned to one user (optional)
 
-list-projects
+### Status Values
 
-
-assign-project <project_id> <user_id>
-
-
-update-status <project_id> <status>
-
-
-Data Models
-User
-
-
-id
-
-
-name
-
-
-role
-
-
-team_id (FK)
-
-
-Relationships:
-
-
-One user belongs to one team
-
-
-One user may be assigned multiple projects
-
-
-Team
-
-
-id
-
-
-name
-
-
-Relationships:
-
-
-One team has many users
-
-
-Project
-
-
-id
-
-
-title
-
-
-description
-
-
-status
-
-
-assigned_user_id (FK)
-
-
-Relationships:
-
-
-One project is assigned to one user (optional)
-
-
-Status Values
 Status is restricted using a tuple:
+```python
 VALID_STATUSES = ("not_started", "in_progress", "completed")
+```
 
 Example:
+```bash
 update-status 1 completed
+```
 
-Example Workflows
-Create a Team
+## Example Workflows
+
+### Create a Team
+```bash
 python3 app.py create-team Developers
+```
 
-Create a User
+### Create a User
+```bash
 python3 app.py create-user Alice Developer
+```
 
-Add User to Team
+### Add User to Team
+```bash
 python3 app.py add-user-to-team 1 1
+```
 
-Create a Project
+### Create a Project
+```bash
 python3 app.py create-project "Website Redesign" "Rebuild the frontend"
+```
 
-Assign a Project
+### Assign a Project
+```bash
 python3 app.py assign-project 1 1
+```
 
-Update Status
+### Update Status
+```bash
 python3 app.py update-status 1 in_progress
+```
 
-Troubleshooting
+## Troubleshooting
 
-
-No module named 'sqlalchemy'
-
-
+### No module named 'sqlalchemy'
+```bash
 pipenv install sqlalchemy
 pipenv shell
+```
 
-
-
-No module named 'click'
-
-
+### No module named 'click'
+```bash
 pipenv install click
+```
 
-
-
-Command not recognized
+### Command not recognized
 Make sure you are inside the virtual environment:
-
-
+```bash
 pipenv shell
+```
 
-
-
-Database does not update
+### Database does not update
 Delete the SQLite file and rerun the program:
-
-
-rm project.db
+```bash
+rm project_tracker.db
 python3 app.py
+```
 
-License
+## License
+
 This project is open-source and available for educational use only.
-Copyright
-Copyright (c) by Daniel Kamweru
+
+**Copyright**  
+Copyright (c) by Daniel Kamweru  
 All rights reserved.
-
-
-
